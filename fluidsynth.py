@@ -1,44 +1,40 @@
 """
 ================================================================================
 
-	pyFluidSynth
+        pyFluidSynth
 
-	Python bindings for FluidSynth
+        Python bindings for FluidSynth
 
-	Copyright 2008, Nathan Whitehead <nwhitehe@gmail.com>
-	Currently maintained by Bart Spaans <onderstekop@gmail.com>
-	Released under the LGPL
+        Copyright 2008, Nathan Whitehead <nwhitehe@gmail.com>
+        Currently maintained by Bart Spaans <onderstekop@gmail.com>
+        Released under the LGPL
 
-	This module contains python bindings for FluidSynth.  FluidSynth is a
-	software synthesizer for generating music.  It works like a MIDI
-	synthesizer.  You load patches, set parameters, then send NOTEON and
-	NOTEOFF events to play notes.  Instruments are defined in SoundFonts,
-	generally files with the extension SF2.  FluidSynth can either be used
-	to play audio itself, or you can call a function that returns chunks
-	of audio data and output the data to the soundcard yourself.
-	FluidSynth works on all major platforms, so pyFluidSynth should also.
+        This module contains python bindings for FluidSynth.  FluidSynth is a
+        software synthesizer for generating music.  It works like a MIDI
+        synthesizer.  You load patches, set parameters, then send NOTEON and
+        NOTEOFF events to play notes.  Instruments are defined in SoundFonts,
+        generally files with the extension SF2.  FluidSynth can either be used
+        to play audio itself, or you can call a function that returns chunks
+        of audio data and output the data to the soundcard yourself.
+        FluidSynth works on all major platforms, so pyFluidSynth should also.
 
 ================================================================================
 """
 
-import time
 from ctypes import *
 from ctypes.util import find_library
-
 
 # A short circuited or expression to find the FluidSynth library
 # (mostly needed for Windows distributions of libfluidsynth supplied with QSynth)
 
-lib = find_library('fluidsynth') or find_library('libfluidsynth') or find_library('libfluidsynth-1')
-
+lib = find_library('fluidsynth') or find_library(
+    'libfluidsynth') or find_library('libfluidsynth-1')
 
 if lib is None:
-	raise ImportError, "Couldn't find the FluidSynth library."
-
+    raise ImportError("Couldn't find the FluidSynth library.")
 
 # Dynamically link the FluidSynth library
 _fl = CDLL(lib)
-
 
 
 # Helper function for declaring function prototypes
@@ -55,7 +51,6 @@ def cfunc(name, result, *args):
 # Bump this up when changing the interface for users
 api_version = '1.2'
 
-
 # Function prototypes for C versions of functions
 new_fluid_settings = cfunc('new_fluid_settings', c_void_p)
 
@@ -66,17 +61,17 @@ new_fluid_audio_driver = cfunc('new_fluid_audio_driver', c_void_p,
                                ('settings', c_void_p, 1),
                                ('synth', c_void_p, 1))
 
-fluid_settings_setstr = cfunc('fluid_settings_setstr', c_int, 
+fluid_settings_setstr = cfunc('fluid_settings_setstr', c_int,
                               ('settings', c_void_p, 1),
                               ('name', c_char_p, 1),
                               ('str', c_char_p, 1))
 
-fluid_settings_setnum = cfunc('fluid_settings_setnum', c_int, 
+fluid_settings_setnum = cfunc('fluid_settings_setnum', c_int,
                               ('settings', c_void_p, 1),
                               ('name', c_char_p, 1),
                               ('val', c_double, 1))
 
-fluid_settings_setint = cfunc('fluid_settings_setint', c_int, 
+fluid_settings_setint = cfunc('fluid_settings_setint', c_int,
                               ('settings', c_void_p, 1),
                               ('name', c_char_p, 1),
                               ('val', c_int, 1))
@@ -96,9 +91,9 @@ fluid_synth_sfload = cfunc('fluid_synth_sfload', c_int,
                            ('update_midi_presets', c_int, 1))
 
 fluid_synth_sfunload = cfunc('fluid_synth_sfunload', c_int,
-                           ('synth', c_void_p, 1),
-                           ('sfid', c_int, 1),
-                           ('update_midi_presets', c_int, 1))
+                             ('synth', c_void_p, 1),
+                             ('sfid', c_int, 1),
+                             ('update_midi_presets', c_int, 1))
 
 fluid_synth_program_select = cfunc('fluid_synth_program_select', c_int,
                                    ('synth', c_void_p, 1),
@@ -148,7 +143,7 @@ fluid_synth_program_reset = cfunc('fluid_synth_program_reset', c_int,
                                   ('synth', c_void_p, 1))
 
 fluid_synth_system_reset = cfunc('fluid_synth_system_reset', c_int,
-                                  ('synth', c_void_p, 1))
+                                 ('synth', c_void_p, 1))
 
 fluid_synth_write_s16 = cfunc('fluid_synth_write_s16', c_void_p,
                               ('synth', c_void_p, 1),
@@ -159,7 +154,6 @@ fluid_synth_write_s16 = cfunc('fluid_synth_write_s16', c_void_p,
                               ('rbuf', c_void_p, 1),
                               ('roff', c_int, 1),
                               ('rincr', c_int, 1))
-
 
 
 def fluid_synth_write_s16_stereo(synth, len):
@@ -178,6 +172,7 @@ def fluid_synth_write_s16_stereo(synth, len):
 
 class Synth:
     """Synth represents a FluidSynth synthesizer"""
+
     def __init__(self, gain=0.2, samplerate=44100):
         """Create new synthesizer object to control sound generation
 
@@ -188,13 +183,14 @@ class Synth:
 
         """
         st = new_fluid_settings()
-        fluid_settings_setnum(st, 'synth.gain', gain)
-        fluid_settings_setnum(st, 'synth.sample-rate', samplerate)
+        fluid_settings_setnum(st, b'synth.gain', gain)
+        fluid_settings_setnum(st, b'synth.sample-rate', samplerate)
         # No reason to limit ourselves to 16 channels
-        fluid_settings_setint(st, 'synth.midi-channels', 256)
+        fluid_settings_setint(st, b'synth.midi-channels', 256)
         self.settings = st
         self.synth = new_fluid_synth(st)
         self.audio_driver = None
+
     def start(self, driver=None):
         """Start audio output driver in separate background thread
 
@@ -214,39 +210,49 @@ class Synth:
 
         """
         if driver is not None:
-            assert (driver in ['alsa', 'oss', 'jack', 'portaudio', 'sndmgr', 'coreaudio', 'Direct Sound']) 
-            fluid_settings_setstr(self.settings, 'audio.driver', driver)
+            assert (driver in ['alsa', 'oss', 'jack', 'portaudio', 'sndmgr',
+                               'coreaudio', 'Direct Sound'])
+            fluid_settings_setstr(self.settings, b'audio.driver',
+                                  driver.encode())
         self.audio_driver = new_fluid_audio_driver(self.settings, self.synth)
+
     def delete(self):
         if self.audio_driver is not None:
             delete_fluid_audio_driver(self.audio_driver)
         delete_fluid_synth(self.synth)
         delete_fluid_settings(self.settings)
+
     def sfload(self, filename, update_midi_preset=0):
         """Load SoundFont and return its ID"""
-        return fluid_synth_sfload(self.synth, filename, update_midi_preset)
+        return fluid_synth_sfload(self.synth, filename.encode(),
+                                  update_midi_preset)
+
     def sfunload(self, sfid, update_midi_preset=0):
         """Unload a SoundFont and free memory it used"""
         return fluid_synth_sfunload(self.synth, sfid, update_midi_preset)
+
     def program_select(self, chan, sfid, bank, preset):
         """Select a program"""
         return fluid_synth_program_select(self.synth, chan, sfid, bank, preset)
+
     def noteon(self, chan, key, vel):
         """Play a note"""
-	if key < 0 or key > 128:
-		return False
-	if chan < 0:
-		return False
-	if vel < 0 or vel > 128:
-		return False
+        if key < 0 or key > 128:
+            return False
+        if chan < 0:
+            return False
+        if vel < 0 or vel > 128:
+            return False
         return fluid_synth_noteon(self.synth, chan, key, vel)
+
     def noteoff(self, chan, key):
         """Stop a note"""
-	if key < 0 or key > 128:
-		return False
-	if chan < 0:
-		return False
+        if key < 0 or key > 128:
+            return False
+        if chan < 0:
+            return False
         return fluid_synth_noteoff(self.synth, chan, key)
+
     def pitch_bend(self, chan, val):
         """Adjust pitch of a playing channel by small amounts
 
@@ -257,6 +263,7 @@ class Synth:
         
         """
         return fluid_synth_pitch_bend(self.synth, chan, val + 8192)
+
     def cc(self, chan, ctrl, val):
         """Send control change value
 
@@ -270,23 +277,29 @@ class Synth:
           64 : sustain
           91 : reverb
           93 : chorus
-        """ 
+        """
         return fluid_synth_cc(self.synth, chan, ctrl, val)
+
     def program_change(self, chan, prg):
         """Change the program"""
         return fluid_synth_program_change(self.synth, chan, prg)
+
     def bank_select(self, chan, bank):
         """Choose a bank"""
         return fluid_synth_bank_select(self.synth, chan, bank)
+
     def sfont_select(self, chan, sfid):
         """Choose a SoundFont"""
         return fluid_synth_sfont_select(self.synth, chan, sfid)
+
     def program_reset(self):
         """Reset the programs on all channels"""
         return fluid_synth_program_reset(self.synth)
+
     def system_reset(self):
         """Stop all notes and reset all programs"""
         return fluid_synth_system_reset(self.synth)
+
     def get_samples(self, len=1024):
         """Generate audio samples
 
@@ -296,6 +309,7 @@ class Synth:
 
         """
         return fluid_synth_write_s16_stereo(self.synth, len)
+
 
 def raw_audio_string(data):
     """Return a string of bytes to send to soundcard
