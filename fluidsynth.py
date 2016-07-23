@@ -211,7 +211,7 @@ class Synth:
         """
         if driver is not None:
             assert (driver in ['alsa', 'oss', 'jack', 'portaudio', 'sndmgr',
-                               'coreaudio', 'Direct Sound'])
+                               'coreaudio', 'Direct Sound', 'pulseaudio'])
             fluid_settings_setstr(self.settings, b'audio.driver',
                                   driver.encode())
         self.audio_driver = new_fluid_audio_driver(self.settings, self.synth)
